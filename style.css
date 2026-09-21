@@ -5,7 +5,8 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    color: #f4f7fb;
+    background-color: #111827;
 }
 
 .container {
@@ -14,8 +15,9 @@ body {
     margin: 100px auto;
     padding: 40px;
     text-align: center;
-    background-color: white;
+    background-color: #1f2937;
     border-radius: 10px;
+    box-shadow: 0 12px 30px rgb(0 0 0 / 25%);
 }
 
 h1 {
@@ -26,12 +28,52 @@ h1 {
     min-height: 50px;
     font-size: 20px;
     margin-bottom: 30px;
+    color: #d1d5db;
 }
 
 button {
     padding: 12px 24px;
-    border: none;
+    color: #111827;
+    background-color: #fbbf24;
+    border: 2px solid #fbbf24;
     border-radius: 6px;
     cursor: pointer;
     font-size: 16px;
+}
+
+button:hover {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+}
+
+.historico {
+    margin-top: 40px;
+    text-align: left;
+}
+
+h2 {
+    font-size: 20px;
+    color: #fbbf24;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #d1d5db;
+}
+
+th,
+td {
+    padding: 12px;
+    border-bottom: 1px solid #374151;
+}
+
+th {
+    color: #f9fafb;
+    background-color: #374151;
+}
+
+td:last-child,
+th:last-child {
+    width: 35%;
 }

@@ -1,9 +1,24 @@
 const frases = [
-    "O sucesso é a soma de pequenos esforços.",
-    "A prática leva à evolução.",
-    "Aprender é construir novas possibilidades.",
-    "Grandes projetos começam com pequenas ideias.",
-    "Não tenha medo de começar."
+    {
+        texto: "Cada dia é uma nova oportunidade para recomeçar.",
+        tipo: "Recomeço"
+    },
+    {
+        texto: "A persistência transforma planos em conquistas.",
+        tipo: "Persistência"
+    },
+    {
+        texto: "Ideias simples podem criar mudanças extraordinárias.",
+        tipo: "Criatividade"
+    },
+    {
+        texto: "O melhor momento para aprender é agora.",
+        tipo: "Aprendizado"
+    },
+    {
+        texto: "Pequenos passos também levam a grandes destinos.",
+        tipo: "Progresso"
+    }
 ];
 
 function obterFraseAleatoria(lista) {
@@ -18,8 +33,19 @@ function obterFraseAleatoria(lista) {
 
 function exibirFrase() {
     const elemento = document.getElementById("frase");
+    const fraseSorteada = obterFraseAleatoria(frases);
 
-    elemento.textContent = obterFraseAleatoria(frases);
+    elemento.textContent = fraseSorteada.texto;
+
+    const linha = document.createElement("tr");
+    const celulaFrase = document.createElement("td");
+    const celulaTipo = document.createElement("td");
+
+    celulaFrase.textContent = fraseSorteada.texto;
+    celulaTipo.textContent = fraseSorteada.tipo;
+    linha.append(celulaFrase, celulaTipo);
+
+    document.getElementById("historico-frases").appendChild(linha);
 }
 
 if (typeof document !== "undefined") {

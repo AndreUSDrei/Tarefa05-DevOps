@@ -1,25 +1,23 @@
-name: Pipeline CI/CD
+name: Pipeline do projeto
+
 on:
   push:
-    branches:
-      - main
-
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-
-  # ==========================================
-  # 1. BUILD
-  # ==========================================
-
-  build:
-    name: Build
+  ci:
+    name: Testes e qualidade
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Baixar código
         uses: actions/checkout@v4
 
@@ -27,85 +25,25 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Instalar dependências
-        run: npm install
-
-      - name: Verificar arquivos
-        run: |
-          test -f index.html
-          test -f style.css
-          test -f script.js
-
-          echo "Build concluído com sucesso!"
-
-
-  # ==========================================
-  # 2. TEST
-  # ==========================================
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-
-    needs: build
-
-    steps:
-
-      - name: Baixar código
-        uses: actions/checkout@v4
-
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Instalar dependências
-        run: npm install
+        run: npm ci
 
       - name: Executar testes
-        run: npm test
+        run: npm test -- --runInBand
 
-
-  # ==========================================
-  # 3. QUALITY
-  # ==========================================
-
-  quality:
-    name: Quality
-    runs-on: ubuntu-latest
-
-    needs: test
-
-    steps:
-
-      - name: Baixar código
-        uses: actions/checkout@v4
-
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Instalar dependências
-        run: npm install
-
-      - name: Executar análise de qualidade
+      - name: Executar lint
         run: npm run lint
 
-
-  # ==========================================
-  # 4. SECURITY
-  # ==========================================
-
   security:
-    name: Security
+    name: Segurança
     runs-on: ubuntu-latest
-
-    needs: quality
+    permissions:
+      contents: read
+      pull-requests: read
 
     steps:
-
       - name: Baixar código
         uses: actions/checkout@v4
 
@@ -113,170 +51,48 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Instalar dependências
-        run: npm install
+        run: npm ci
 
       - name: Verificar vulnerabilidades
         run: npm audit --audit-level=high
 
+      - name: Revisar dependências alteradas
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
 
-  # ==========================================
-  # 5. PACKAGE
-  # ==========================================
-
-  package:
-    name: Package
+  deploy:
+    name: Publicar no GitHub Pages
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: [ci, security]
     runs-on: ubuntu-latest
-
-    needs: security
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Criar pacote
+      - name: Preparar arquivos do site
         run: |
-          mkdir -p dist
+          mkdir dist
+          cp index.html style.css script.js dist/
 
-          cp index.html dist/
-          cp style.css dist/
-          cp script.js dist/
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
 
-          echo "Pacote criado com sucesso!"
+      - name: Enviar artefato do site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
 
-      - name: Verificar pacote
-        run: |
-          test -f dist/index.html
-          test -f dist/style.css
-          test -f dist/script.js
-
-
-  # ==========================================
-  # 6. DEPLOY
-  # ==========================================
-
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
-
-    needs: package
-
-    steps:
-
-      - name: Deploy em desenvolvimento
-        run: |
-          echo "Realizando deploy no ambiente DEV..."
-          echo "Deploy DEV concluído!"
-
-
-  # ==========================================
-  # 7. SMOKE TEST
-  # ==========================================
-
-  smoke-test:
-    name: Smoke Test
-    runs-on: ubuntu-latest
-
-    needs: deploy
-
-    steps:
-
-      - name: Executar Smoke Test
-        run: |
-          echo "Verificando aplicação..."
-          echo "Aplicação está funcionando!"
-          echo "Smoke Test aprovado!"
-
-
-  # ==========================================
-  # 8. PERFORMANCE
-  # ==========================================
-
-  performance:
-    name: Performance
-    runs-on: ubuntu-latest
-
-    needs: smoke-test
-
-    steps:
-
-      - name: Executar teste de performance
-        run: |
-          echo "Executando teste de performance..."
-          echo "Performance aprovada!"
-
-
-  # ==========================================
-  # 9. APPROVAL
-  # ==========================================
-
-  approval:
-    name: Approval
-    runs-on: ubuntu-latest
-
-    needs: performance
-
-    steps:
-
-      - name: Aprovação para produção
-        run: |
-          echo "Aplicação aprovada para produção!"
-
-
-  # ==========================================
-  # 10. RELEASE
-  # ==========================================
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-
-    needs: approval
-
-    steps:
-
-      - name: Criar release
-        run: |
-          echo "Criando nova versão..."
-          echo "Release criada com sucesso!"
-
-
-  # ==========================================
-  # 11. MONITORING
-  # ==========================================
-
-  monitoring:
-    name: Monitoring
-    runs-on: ubuntu-latest
-
-    needs: release
-
-    steps:
-
-      - name: Monitorar aplicação
-        run: |
-          echo "Monitorando aplicação..."
-          echo "Aplicação funcionando normalmente!"
-
-
-  # ==========================================
-  # 12. ROLLBACK
-  # ==========================================
-
-  rollback:
-    name: Rollback
-    runs-on: ubuntu-latest
-
-    needs: monitoring
-
-    if: failure()
-
-    steps:
-
-      - name: Executar rollback
-        run: |
-          echo "Problema detectado!"
-          echo "Executando rollback..."
-          echo "Rollback concluído!"
+      - name: Publicar site
+        id: deployment
+        uses: actions/deploy-pages@v4
